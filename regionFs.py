@@ -44,9 +44,13 @@ def resize_region(region):
     return resized
 
 
+# skin_ycrcb_mint = np.array((0, 133, 77))
+# skin_ycrcb_maxt = np.array((255, 173, 127))
+skin_ycrcb_mint = np.array((0, 143, 87))
+skin_ycrcb_maxt = np.array((255, 183, 137))
+
+
 def select_contour(img):
-    skin_ycrcb_mint = np.array((0, 133, 77))
-    skin_ycrcb_maxt = np.array((255, 173, 127))
     img_ycrcb = cv2.cvtColor(img, cv2.COLOR_BGR2YCR_CB)
     skin_ycrcb = cv2.inRange(img_ycrcb, skin_ycrcb_mint, skin_ycrcb_maxt)
     blur = cv2.GaussianBlur(simF.erode(skin_ycrcb), (3, 3), 0)
@@ -67,7 +71,7 @@ def select_contour(img):
 
 
 def select_roi(image_orig, image_bin):
-    contours_borders, hierarchy = cv2.findContours(image_bin.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours_borders, hierarchy = cv2.findContours(image_bin.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     contours = []
     contour_angles = []
@@ -77,6 +81,9 @@ def select_roi(image_orig, image_bin):
         center, size, angle = cv2.minAreaRect(contour)
         xt, yt, h, w = cv2.boundingRect(contour)
         region_points = []
+        # i = range(xt, xt + h)
+        # j = range(yt, yt + w)
+        # region_points = zip(i, j)
         for i in range(xt, xt + h):
             for j in range(yt, yt + w):
                 dist = cv2.pointPolygonTest(contour, (i, j), False)
@@ -131,4 +138,66 @@ def select_roi(image_orig, image_bin):
     region_distances[-1] += sorted_rectangles[-1][0]
 
     return image_orig, sorted_regions[:, 0], sorted_rectangles, region_distances
+    # return region[:, 0], sorted_rectangles  # , region_distances
+
+
+def select_roi_new(image_orig, image_bin):
+    contour, _ = select_contour(image_orig)
+
+    contour_angles = []
+    contour_centers = []
+    contour_sizes = []
+    regions = []
+    center, size, angle = cv2.minAreaRect(contour)
+    xt, yt, h, w = cv2.boundingRect(contour)
+    region_points = []
+    for i in range(xt, xt + h):
+        for j in range(yt, yt + w):
+            dist = cv2.pointPolygonTest(contour, (i, j), False)
+            if dist >= 0 and image_bin[j, i] == 255:  # da li se tacka nalazi unutar konture?
+                region_points.append([i, j])
+    contour_centers.append(center)
+    contour_angles.append(angle)
+    contour_sizes.append(size)
+    regions.append(region_points)
+
+    # Postavljanje kontura u vertikalan polozaj
+    regions = rotate_regions(regions, contour_angles, contour_centers, contour_sizes)
+
+    regions_dict = {}
+    for contour in regions:
+        if not regions:
+            return None, None, None
+
+        if np.logical_not(any(contour[:, 0])):
+            return None, None, None
+
+        if np.logical_not(any(contour[:, 1])):
+            return None, None, None
+
+        min_x = min(contour[:, 0])
+        max_x = max(contour[:, 0])
+        min_y = min(contour[:, 1])
+        max_y = max(contour[:, 1])
+
+        region = np.zeros((max_y - min_y + 1, max_x - min_x + 1), dtype=np.int16)
+        for point in contour:
+            x = point[0]
+            y = point[1]
+            region[y - min_y, x - min_x] = 255
+
+        regions_dict[min_x] = [resize_region(region), (min_x, min_y, max_x - min_x, max_y - min_y)]
+
+    sorted_regions_dict = collections.OrderedDict(sorted(regions_dict.items()))
+    sorted_regions = np.array(sorted_regions_dict.values())
+    # region = np.array(regions_dict.values())
+
+    sorted_rectangles = sorted_regions[:, 1]
+    # region_distances = [-sorted_rectangles[0][0] - sorted_rectangles[0][2]]
+    # for x, y, w, h in sorted_regions[1:-1, 1]:
+    #     region_distances[-1] += x
+    #     region_distances.append(-x - w)
+    # region_distances[-1] += sorted_rectangles[-1][0]
+
+    return sorted_regions[:, 0], sorted_rectangles
     # return region[:, 0], sorted_rectangles  # , region_distances

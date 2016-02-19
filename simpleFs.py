@@ -42,10 +42,10 @@ def erode(image):
 
 
 def scale_to_range(image):
-    assert isinstance(image, np.ndarray)
-    # f = open('image_data.txt', 'w')
-    # f.write(str(image))
-    # f.close()
+    # assert isinstance(image, np.ndarray)
+    f = open('image_data.txt', 'w')
+    f.write(str(image))
+    f.close()
 
     scaled = image / 255
     return scaled
