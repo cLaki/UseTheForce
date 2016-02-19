@@ -10,7 +10,7 @@ Of course, it is **not** perfect, as it is only supposed to be an introduction t
 
 ### Requirements
 * Hand(s)
-* Webcam, **or any other cam that can be attached to and used by PC**
+* Webcam, *or any other cam that can be attached to and used by PC*
 * Python 2.7
 * Libraries:
     * OpenCV2
