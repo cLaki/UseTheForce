@@ -6,7 +6,7 @@ It detects hand motion using a webcam, and moves mouse cursor
 accordingly. Also, it can perform left/right mouse button press and release 
 depending on hand gestures.
 
-Of course, it is **not** perfect, as it is only supposed to be an introduction to artifical nerual networks and computer vision.
+Of course, it is **not** perfect (performance is really bad :) ), as it is only supposed to be an introduction to artifical nerual networks and computer vision. I will work on it more (when I get enough time) for improvements, and also make a non-neural network version (will probably use feature matching). 
 
 ### Requirements
 * Hand(s)
